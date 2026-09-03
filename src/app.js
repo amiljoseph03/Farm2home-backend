@@ -3,34 +3,34 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
+const AppError = require('./utils/appError');
+const errorMiddleware = require('./middleware/errorMiddleware');
+
 const app = express();
 
-// Security Middleware
+// Middlewares
 app.use(helmet());
-
-// Cross-Origin Resource Sharing Setup
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true,
-  }),
-);
-
-// Request Body Parsers
+app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// HTTP Request Logger
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Basic Health Check Route
+// Health Check Endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Farmer Marketplace API Server is healthy and running!',
-  });
+  res
+    .status(200)
+    .json({ status: 'success', message: 'Server is healthy and running' });
 });
+
+// Handle Unhandled Routes (404) - Express 5 compatible route pattern
+app.all('/{*splat}', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+// Global Error Handling Middleware
+app.use(errorMiddleware);
 
 module.exports = app;
