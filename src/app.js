@@ -5,6 +5,7 @@ const morgan = require('morgan');
 
 const AppError = require('./utils/appError');
 const errorMiddleware = require('./middleware/errorMiddleware');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -25,7 +26,10 @@ app.get('/health', (req, res) => {
     .json({ status: 'success', message: 'Server is healthy and running' });
 });
 
-// Handle Unhandled Routes (404) - Express 5 compatible route pattern
+// API Routes
+app.use('/api/v1/auth', authRoutes);
+
+// Handle Unhandled Routes (404)
 app.all('/{*splat}', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
@@ -34,8 +38,3 @@ app.all('/{*splat}', (req, res, next) => {
 app.use(errorMiddleware);
 
 module.exports = app;
-
-
-
-
-
