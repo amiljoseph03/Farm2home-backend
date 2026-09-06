@@ -28,6 +28,7 @@ const createSendToken = (user, statusCode, res) => {
 // 1. User Registration Controller
 exports.register = async (req, res, next) => {
   try {
+    console.log("received body",req.body)
     const { name, email, phone, password, role } = req.body;
 
     // ഇമെയിൽ അല്ലെങ്കിൽ ഫോൺ നമ്പർ നിലവിലുണ്ടോ എന്ന് പരിശോധിക്കുന്നു

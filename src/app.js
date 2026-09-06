@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const AppError = require('./utils/appError');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes'); // 1. Product Routes ഇമ്പോർട്ട് ചെയ്തു
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/products', productRoutes); // 2. Product Route ഇവിടെ ചേർത്തു
 
 // Handle Unhandled Routes (404)
 app.all('/{*splat}', (req, res, next) => {
