@@ -8,6 +8,9 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes'); // 1. Product Routes ഇമ്പോർട്ട് ചെയ്തു
 
+const equipmentRoutes = require('./routes/equipmentRoutes');
+
+
 const app = express();
 
 // Middlewares
@@ -30,6 +33,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', productRoutes); // 2. Product Route ഇവിടെ ചേർത്തു
+app.use('/api/v1/equipment', equipmentRoutes);
 
 // Handle Unhandled Routes (404)
 app.all('/{*splat}', (req, res, next) => {
