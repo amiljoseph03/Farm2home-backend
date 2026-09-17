@@ -10,6 +10,9 @@ const productRoutes = require('./routes/productRoutes'); // 1. Product Routes �
 
 const equipmentRoutes = require('./routes/equipmentRoutes');
 
+const bookingRoutes = require('./routes/bookingRoutes');
+
+
 
 const app = express();
 
@@ -34,6 +37,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', productRoutes); // 2. Product Route ഇവിടെ ചേർത്തു
 app.use('/api/v1/equipment', equipmentRoutes);
+app.use('/api/v1/bookings', bookingRoutes);
 
 // Handle Unhandled Routes (404)
 app.all('/{*splat}', (req, res, next) => {
