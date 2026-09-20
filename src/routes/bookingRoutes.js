@@ -24,6 +24,12 @@ router.get(
 );
 
 // Farmer-മാർക്ക് ബുക്കിംഗ് approve / reject ചെയ്യാൻ
+// router.patch(
+//   '/:id/status',
+//   restrictTo('farmer', 'admin'),
+//   bookingController.updateBookingStatus,
+// );
+
 router.patch(
   '/:id/status',
   restrictTo('farmer', 'admin'),

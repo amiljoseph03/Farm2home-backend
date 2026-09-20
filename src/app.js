@@ -45,6 +45,7 @@ app.all('/{*splat}', (req, res, next) => {
 });
 
 // Global Error Handling Middleware
+
 app.use(errorMiddleware);
 
 module.exports = app;

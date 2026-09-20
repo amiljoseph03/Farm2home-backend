@@ -1,5 +1,6 @@
 const Equipment = require('../models/equipmentModel');
 const AppError = require('../utils/appError');
+const APIFeatures = require('../utils/apiFeatures');
 
 // 1. പുതിയ ഇക്വിപ്മെന്റ് വാടകയ്ക്ക് ലിസ്റ്റ് ചെയ്യുക
 exports.createEquipment = async (req, res, next) => {
@@ -20,19 +21,44 @@ exports.createEquipment = async (req, res, next) => {
 };
 
 // 2. ലഭ്യമായ എല്ലാ യന്ത്രങ്ങളും കാണുക
+// exports.getAllEquipment = async (req, res, next) => {
+//   try {
+//     const equipment = await Equipment.find({ isAvailable: true }).populate(
+//       'owner',
+//       'name phone email',
+//     );
+
+//     res.status(200).json({
+//       status: 'success',
+//       results: equipment.length,
+//       data: {
+//         equipment,
+//       },
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 exports.getAllEquipment = async (req, res, next) => {
   try {
-    const equipment = await Equipment.find({ isAvailable: true }).populate(
+    const features = new APIFeatures(
+      Equipment.find({ isAvailable: true }),
+      req.query,
+    )
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+
+    const equipment = await features.query.populate(
       'owner',
-      'name phone email',
+      'name email phone',
     );
 
     res.status(200).json({
       status: 'success',
       results: equipment.length,
-      data: {
-        equipment,
-      },
+      data: { equipment },
     });
   } catch (error) {
     next(error);
