@@ -11,8 +11,10 @@ const productRoutes = require('./routes/productRoutes'); // 1. Product Routes �
 const equipmentRoutes = require('./routes/equipmentRoutes');
 
 const bookingRoutes = require('./routes/bookingRoutes');
+const cartRouter = require('./routes/cartRoutes');
 
 
+const orderRouter = require('./routes/orderRoutes');
 
 const app = express();
 
@@ -38,6 +40,9 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', productRoutes); // 2. Product Route ഇവിടെ ചേർത്തു
 app.use('/api/v1/equipment', equipmentRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
+app.use('/api/v1/cart', cartRouter);
+app.use('/api/v1/orders', orderRouter);  
+
 
 // Handle Unhandled Routes (404)
 app.all('/{*splat}', (req, res, next) => {
@@ -46,6 +51,24 @@ app.all('/{*splat}', (req, res, next) => {
 
 // Global Error Handling Middleware
 
-app.use(errorMiddleware);
+// app.use(errorMiddleware);
+
+// Global Error Handling Middleware
+app.use((err, req, res, next) => {
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
+
+  // 🔴 exact error ടെർമിനലിൽ പ്രിന്റ് ചെയ്യാൻ വേണ്ടി ചേർക്കുന്നത്:
+  console.log('--- EXACT SERVER ERROR ---');
+  console.error(err);
+  console.log('---------------------------');
+
+  res.status(err.statusCode).json({
+    status: err.status,
+    error: err,
+    message: err.message,
+    stack: err.stack,
+  });
+});
 
 module.exports = app;
