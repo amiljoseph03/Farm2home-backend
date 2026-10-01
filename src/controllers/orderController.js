@@ -86,5 +86,63 @@ exports.getOrderById = async (req, res, next) => {
     next(error);
   }
 };
-// ----------------------------------------------------
+// ---------------phase 11-------------------------------------
 
+// 4. Farmer-ന്റെ പ്രൊഡക്റ്റുകൾ ഉള്ള ഓർഡറുകൾ മാത്രം എടുക്കുക
+exports.getFarmerOrders = async (req, res, next) => {
+  try {
+    const farmerId = req.user._id || req.user.id;
+
+    // ആദ്യം ഈ ഫാർമറുടെ എല്ലാ പ്രൊഡക്റ്റ് ID-കളും കണ്ടെത്തുക
+    const Product = require('../models/productModel');
+    const farmerProducts = await Product.find({ seller: farmerId }).select('_id');
+    const productIds = farmerProducts.map((p) => p._id);
+
+    // ആ പ്രൊഡക്റ്റ് ID-കൾ അടങ്ങിയ ഓർഡറുകൾ ഫിൽട്ടർ ചെയ്യുക
+    const orders = await Order.find({ 'items.product': { $in: productIds } })
+      .populate('buyer', 'name email phone')
+      .populate('items.product', 'name pricePerUnit category');
+
+    res.status(200).json({
+      status: 'success',
+      results: orders.length,
+      data: { orders },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 5. Order Status അപ്‌ഡേറ്റ് ചെയ്യുക (Farmer Action)
+exports.updateOrderStatus = async (req, res, next) => {
+  try {
+
+    console.log('--- UPDATE ORDER STATUS HIT ---'); // 👈 ഈ ലോഗ് ചേർക്കുക
+    console.log('Params ID:', req.params.id);
+    console.log('Body:', req.body); 
+    
+    const { orderStatus } = req.body;
+    const allowedStatuses = ['Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+
+    if (!allowedStatuses.includes(orderStatus)) {
+      return next(new AppError('Invalid order status', 400));
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { orderStatus },
+      { new: true, runValidators: true }
+    );
+
+    if (!order) {
+      return next(new AppError('No order found with that ID', 404));
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: { order },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
