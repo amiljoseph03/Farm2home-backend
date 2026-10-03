@@ -1,3 +1,59 @@
+// // const jwt = require('jsonwebtoken');
+// // const User = require('../models/userModel');
+// // const AppError = require('../utils/appError');
+
+// // exports.protect = async (req, res, next) => {
+// //   try {
+// //     let token;
+
+// //     if (
+// //       req.headers.authorization &&
+// //       req.headers.authorization.startsWith('Bearer')
+// //     ) {
+// //       token = req.headers.authorization.split(' ')[1];
+// //     }
+
+// //     console.log('Token Received in Backend:', token);
+// //     console.log('JWT Secret Used:', process.env.JWT_SECRET);
+
+// //     if (!token) {
+// //       return next(
+// //         new AppError(
+// //           'You are not logged in! Please log in to get access.',
+// //           401,
+// //         ),
+// //       );
+// //     }
+
+// //     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+// //     const currentUser = await User.findById(decoded.id);
+// //     if (!currentUser) {
+// //       return next(
+// //         new AppError('The user belonging to this token no longer exists.', 401),
+// //       );
+// //     }
+
+// //     req.user = currentUser;
+// //     next();
+// //   } catch (error) {
+// //     return next(
+// //       new AppError('Invalid token or token expired! Please log in again.', 401),
+// //     );
+// //   }
+// // };
+
+// // exports.restrictTo = (...roles) => {
+// //   return (req, res, next) => {
+// //     if (!roles.includes(req.user.role)) {
+// //       return next(
+// //         new AppError('You do not have permission to perform this action', 403),
+// //       );
+// //     }
+// //     next();
+// //   };
+// // };
+
 // const jwt = require('jsonwebtoken');
 // const User = require('../models/userModel');
 // const AppError = require('../utils/appError');
@@ -13,9 +69,6 @@
 //       token = req.headers.authorization.split(' ')[1];
 //     }
 
-//     console.log('Token Received in Backend:', token);
-//     console.log('JWT Secret Used:', process.env.JWT_SECRET);
-
 //     if (!token) {
 //       return next(
 //         new AppError(
@@ -25,9 +78,14 @@
 //       );
 //     }
 
+//     // 1. Verify token synchronously
 //     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-//     const currentUser = await User.findById(decoded.id);
+//     // 2. Safely get user ID (handles both decoded.id and decoded._id)
+//     const userId = decoded.id || decoded._id;
+
+//     // 3. Find user in Database
+//     const currentUser = await User.findById(userId);
 //     if (!currentUser) {
 //       return next(
 //         new AppError('The user belonging to this token no longer exists.', 401),
@@ -37,6 +95,9 @@
 //     req.user = currentUser;
 //     next();
 //   } catch (error) {
+//     // 🔍 ടെർമിനലിൽ എറർ എന്താണെന്ന് വ്യക്തമായി കാണാൻ:
+//     console.log('🔴 Auth Error Details:', error.message);
+
 //     return next(
 //       new AppError('Invalid token or token expired! Please log in again.', 401),
 //     );
@@ -69,7 +130,13 @@ exports.protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
     }
 
-    if (!token) {
+    // Invalid Token Strings (null, undefined etc) Filter ചെയ്യുക
+    if (
+      !token ||
+      token === 'null' ||
+      token === 'undefined' ||
+      token === '[object Object]'
+    ) {
       return next(
         new AppError(
           'You are not logged in! Please log in to get access.',
@@ -78,10 +145,10 @@ exports.protect = async (req, res, next) => {
       );
     }
 
-    // 1. Verify token synchronously
+    // 1. Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 2. Safely get user ID (handles both decoded.id and decoded._id)
+    // 2. Safely get user ID
     const userId = decoded.id || decoded._id;
 
     // 3. Find user in Database
@@ -95,7 +162,6 @@ exports.protect = async (req, res, next) => {
     req.user = currentUser;
     next();
   } catch (error) {
-    // 🔍 ടെർമിനലിൽ എറർ എന്താണെന്ന് വ്യക്തമായി കാണാൻ:
     console.log('🔴 Auth Error Details:', error.message);
 
     return next(

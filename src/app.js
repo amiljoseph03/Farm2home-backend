@@ -4,24 +4,51 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 
 const AppError = require('./utils/appError');
-const errorMiddleware = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
-const productRoutes = require('./routes/productRoutes'); // 1. Product Routes ഇമ്പോർട്ട് ചെയ്തു
-
+const productRoutes = require('./routes/productRoutes');
 const equipmentRoutes = require('./routes/equipmentRoutes');
-
 const bookingRoutes = require('./routes/bookingRoutes');
 const cartRouter = require('./routes/cartRoutes');
-
-
 const orderRouter = require('./routes/orderRoutes');
-
 
 const app = express();
 
-// Middlewares
-app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
+// 1. Security Middleware
+app.use(helmet({ crossOriginResourcePolicy: false }));
+
+// 2. Allowed Origins
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+// 3. CORS Middleware Configuration
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.indexOf(origin) !== -1 ||
+        allowedOrigins.includes('*')
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error('CORS Policy Error: Origin not allowed'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+    ],
+  }),
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -38,28 +65,22 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/products', productRoutes); // 2. Product Route ഇവിടെ ചേർത്തു
+app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/equipment', equipmentRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/cart', cartRouter);
-app.use('/api/v1/orders', orderRouter);  
+app.use('/api/v1/orders', orderRouter);
 
-
-// Handle Unhandled Routes (404)
-app.all('/{*splat}', (req, res, next) => {
+// 4. Express 5 Compatible Wildcard Route for 404 Handlers
+app.all(/(.*)/, (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
-
-// Global Error Handling Middleware
-
-// app.use(errorMiddleware);
 
 // Global Error Handling Middleware
 app.use((err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
-  // 🔴 exact error ടെർമിനലിൽ പ്രിന്റ് ചെയ്യാൻ വേണ്ടി ചേർക്കുന്നത്:
   console.log('--- EXACT SERVER ERROR ---');
   console.error(err);
   console.log('---------------------------');

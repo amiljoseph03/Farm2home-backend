@@ -5,10 +5,46 @@ const APIFeatures = require('../utils/apiFeatures');
 // 1. പുതിയ പ്രോഡക്റ്റ് ഉണ്ടാക്കുക (Farmers & Admin only)
 exports.createProduct = async (req, res, next) => {
   try {
-    // പ്രോഡക്റ്റ് ഉണ്ടാക്കുന്ന ആളുടെ ID (JWT Protect Middleware വഴി ലഭിക്കുന്നത്)
-    req.body.seller = req.user.id;
+    // 1. req.user ഉണ്ടാകുന്നുണ്ടെന്ന് ഉറപ്പുവരുത്തുക (Protect Middleware)
+    if (!req.user) {
+      return res.status(401).json({
+        status: 'fail',
+        message: 'User is not logged in!',
+      });
+    }
 
-    const newProduct = await Product.create(req.body);
+    // 2. Frontend Payload-ൽ നിന്നുള്ള വാല്യൂസ് Schema-യിലേക്ക് Map ചെയ്യുന്നു
+    const {
+      name,
+      category,
+      description,
+      price,
+      pricePerUnit,
+      unit,
+      quantity,
+      quantityAvailable,
+      stock,
+      images,
+      imageUrl,
+      location,
+    } = req.body;
+
+    const productData = {
+      name,
+      category,
+      description,
+      // Frontend 'price' അയച്ചാലും 'pricePerUnit' അയച്ചാലും സപ്പോർട്ട് ചെയ്യും:
+      pricePerUnit: Number(pricePerUnit || price),
+      unit: unit || 'kg',
+      // Frontend 'quantity' അയച്ചാലും 'quantityAvailable' അയച്ചാലും 'stock' അയച്ചാലും സപ്പോർട്ട് ചെയ്യും:
+      quantityAvailable: Number(quantityAvailable || quantity || stock),
+      images: images || (imageUrl ? [imageUrl] : ['default-product.jpg']),
+      location: location || 'Not Specified',
+      // Schema-യിലെ 'seller' ഫീൽഡിലേക്ക് ലോഗിൻ ചെയ്ത യൂസറിന്റെ ID അയക്കുന്നു:
+      seller: req.user._id || req.user.id,
+    };
+
+    const newProduct = await Product.create(productData);
 
     res.status(201).json({
       status: 'success',
@@ -17,10 +53,10 @@ exports.createProduct = async (req, res, next) => {
       },
     });
   } catch (error) {
+    console.error('CREATE PRODUCT ERROR:', error);
     next(error);
   }
 };
-
 // 2. എല്ലാ പ്രോഡക്റ്റുകളും എടുക്കുക (Public Endpoint)
 // exports.getAllProducts = async (req, res, next) => {
 //   try {
